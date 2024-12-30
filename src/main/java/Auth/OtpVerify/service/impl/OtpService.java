@@ -1,9 +1,6 @@
 package Auth.OtpVerify.service.impl;
 
-import Auth.OtpVerify.dto.EmailDetails;
-import Auth.OtpVerify.dto.OtpRequest;
-import Auth.OtpVerify.dto.OtpValidationRequest;
-import Auth.OtpVerify.dto.Response;
+import Auth.OtpVerify.dto.*;
 import Auth.OtpVerify.entity.Otp;
 import Auth.OtpVerify.repository.OtpRepository;
 import Auth.OtpVerify.utils.AppUtils;
@@ -43,6 +40,33 @@ public class OtpService {
     }
 
     public Response validateOtp(OtpValidationRequest otpValidationRequest){
+        Otp otp = otpRepository.findByEmail(otpValidationRequest.getEmail());
+        if(otp==null){
+            return Response.builder()
+                    .statusCode(400)
+                    .responseMessage("You have not sent an otp")
+                    .build();
+        }
+        if(otp.getExpiresAt().isBefore(LocalDateTime.now())){
+            return Response.builder()
+                    .statusCode(400)
+                    .responseMessage("Expired Otp")
+                    .build();
+        }
 
+        if(!otp.getOtp().equals(otpValidationRequest.getOtp())){
+            return Response.builder()
+                    .statusCode(400)
+                    .responseMessage("Invalid otp")
+                    .build();
+        }
+
+        return Response.builder()
+                .statusCode(200)
+                .responseMessage("SUCCESS")
+                .otpResponse(OtpResponse.builder()
+                        .isOtpValid(true)
+                        .build())
+                .build();
     }
 }
